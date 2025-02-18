@@ -34,7 +34,6 @@ def count_sorry_messages(df):
     sorry_regex = re.compile('|'.join(sorry_variants), re.IGNORECASE)
     
     sorry_counts = df.groupby("Person")["Message"].apply(lambda messages: sum(bool(sorry_regex.search(msg)) for msg in messages)).to_dict()
-    print("Sorry count done")
     return sorry_counts
 
 # Function to find the most used word with more than 4 letters per person
@@ -47,7 +46,6 @@ def most_used_important_word(df):
         word_freq = Counter(filtered_words)
         most_common_word = word_freq.most_common(1)[0] if word_freq else ("None", 0)
         word_counts[person] = most_common_word
-    print("Most used important word done")
     return word_counts
 
 # Function to format seconds into human-readable time
@@ -72,13 +70,9 @@ def fastest_slowest_reply(df):
     if valid_replies.empty:
         return {"fastest": "None", "slowest": "None"}
 
-    fastest_idx = valid_replies['Time_Diff'].idxmin()
-    slowest_idx = valid_replies['Time_Diff'].idxmax()
+    fastest = valid_replies.loc[valid_replies['Time_Diff'].idxmin()]
+    slowest = valid_replies.loc[valid_replies['Time_Diff'].idxmax()]
 
-    fastest = valid_replies.loc[fastest_idx]
-    slowest = valid_replies.loc[slowest_idx]
-
-    print("Reply time analysis done")
     return {
         "fastest": (fastest["Person"], format_time(fastest["Time_Diff"])),
         "slowest": (slowest["Person"], format_time(slowest["Time_Diff"]))
@@ -94,7 +88,6 @@ def average_reply_time(df):
     valid_replies = df[(df['Person'] != df['Prev_Person']) & (df['Time_Diff'] <= 18000)]
     avg_times = valid_replies.groupby('Person')['Time_Diff'].mean().fillna(0).apply(format_time)
 
-    print("Average reply time done")
     return avg_times.to_dict()
 
 # Function to find the most used emoji per person
@@ -106,7 +99,6 @@ def most_used_emoji(df):
         emoji_freq = Counter(emojis)
         most_common_emoji = emoji_freq.most_common(1)[0] if emoji_freq else ("None", 0)
         emoji_counts[person] = most_common_emoji
-    print("Most used emoji analysis done")
     return emoji_counts
 
 # Function to count "I love you" messages
@@ -115,7 +107,6 @@ def count_love_messages(df):
     love_regex = re.compile('|'.join(love_variants), re.IGNORECASE)
     
     love_counts = df.groupby("Person")["Message"].apply(lambda messages: sum(bool(love_regex.search(msg)) for msg in messages)).to_dict()
-    print("Love message count done")
     return love_counts
 
 # Function to count "I miss you" messages
@@ -124,47 +115,31 @@ def count_miss_messages(df):
     miss_regex = re.compile('|'.join(miss_variants), re.IGNORECASE)
     
     miss_counts = df.groupby("Person")["Message"].apply(lambda messages: sum(bool(miss_regex.search(msg)) for msg in messages)).to_dict()
-    print("Miss message count done")
     return miss_counts
 
-# Function to find the most affectionate hour
-def most_lovey_dovey_hour(df):
-    love_keywords = ["i love you", "i miss you", "i adore you", "love u", "miss u", "ily", "i heart you"]
-    love_emojis = {"❤️", "💖", "💕", "💞", "😍", "😘", "💓", "🥰"}
+# Function to count replies in the same minute
+def same_minute_reply_count(df):
+    df = df.sort_values(by='Datetime')
+    df['Prev_Datetime'] = df['Datetime'].shift(1)
+    df['Prev_Person'] = df['Person'].shift(1)
+    df['Time_Diff'] = (df['Datetime'] - df['Prev_Datetime']).dt.total_seconds()
 
-    love_regex = re.compile('|'.join(love_keywords), re.IGNORECASE)
-    df["Hour"] = df["Datetime"].dt.hour
+    same_minute_replies = df[(df['Person'] != df['Prev_Person']) & (df['Time_Diff'] <= 60)]
+    
+    count = same_minute_replies.shape[0]
+    return {"same_minute_reply_count": count}
 
-    love_hour_count = Counter()
-
-    for _, row in df.iterrows():
-        message = row["Message"]
-        hour = row["Hour"]
-
-        if love_regex.search(message) or any(char in love_emojis for char in message):
-            love_hour_count[hour] += 1
-
-    if love_hour_count:
-        most_lovey_hour = max(love_hour_count, key=love_hour_count.get)
-        print("Most Lovey-Dovey Hour analysis done")
-        return f"💖 Most Lovey-Dovey Hour: {most_lovey_hour}:00 - {most_lovey_hour + 1}:00 ({love_hour_count[most_lovey_hour]} love messages)"
-    else:
-        return "No love messages found 😢"
-
+# Function to find the longest message
 def longest_message(df):
     if df.empty:
         return {"longest_overall": ("None", 0), "longest_per_person": {}}
 
-    # Find the longest message overall
     longest_overall = df.loc[df["Message"].str.len().idxmax()]
     longest_overall_tuple = (longest_overall["Person"], len(longest_overall["Message"]))
 
-    # Find the longest message per person
     longest_per_person = {}
     for person, messages in df.groupby("Person")["Message"]:
         longest_msg = messages.loc[messages.str.len().idxmax()]
         longest_per_person[person] = len(longest_msg)
 
-    print("Longest message analysis done")
     return {"longest_overall": longest_overall_tuple, "longest_per_person": longest_per_person}
-
