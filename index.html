@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valentine File Upload</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1"></script> 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #FFB6C1;
+            background-image: url('https://www.transparenttextures.com/patterns/hearts.png');
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Continuous Bounce Animation */
+        @keyframes bounce {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -55%) scale(1.1); }
+        }
+
+        .modal {
+            display: block;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            text-align: center;
+            border: 3px solid #FF1493;
+            animation: bounce 1.5s infinite ease-in-out;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            cursor: pointer;
+            font-size: 22px;
+            color: #FF1493;
+            font-weight: bold;
+        }
+
+        h2 {
+            color: #FF1493;
+            font-family: 'Courier New', Courier, monospace;
+            text-shadow: 2px 2px #FFC0CB;
+        }
+
+        .upload-container {
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .upload-btn {
+            background: #FF69B4;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .upload-btn:disabled {
+            background: #FFC0CB;
+            cursor: not-allowed;
+        }
+
+        .upload-btn:hover:enabled {
+            background: #FF1493;
+            transform: scale(1.1);
+            box-shadow: 0px 0px 15px rgba(255, 20, 147, 0.6);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        label {
+            display: block;
+            font-size: 16px;
+            color: white;
+            background: #FF69B4;
+            padding: 10px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        label:hover {
+            background: #FF1493;
+            transform: scale(1.1);
+        }
+
+        #fileNameDisplay {
+            color: #FF1493;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <form class="modal" action="/upload" method="post" enctype="multipart/form-data">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2>💌 Upload Your File 💌</h2>
+        
+        <div class="upload-container">
+            <label for="fileInput"> Choose a File</label>
+            <input type="file" id="fileInput" name="file" accept=".txt" required onchange="validateFile()">
+            <br>
+            <span id="fileNameDisplay"></span>
+        </div>
+        <br>
+        <button type="submit" id="uploadBtn" class="upload-btn" onclick="startConfetti(event)" disabled> Upload with Love </button>
+    </form>
+    
+    <script>
+        function closeModal() {
+            document.querySelector('.modal').style.display = 'none';
+        }
+
+        function validateFile() {
+            const fileInput = document.getElementById("fileInput");
+            const fileNameDisplay = document.getElementById("fileNameDisplay");
+            const uploadBtn = document.getElementById("uploadBtn");
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const fileName = file.name;
+                const fileExtension = fileName.split('.').pop().toLowerCase();
+
+                if (fileExtension !== "txt") {
+                    alert("Only .txt files are allowed! ❌");
+                    fileInput.value = ""; // Clear input
+                    fileNameDisplay.textContent = "";
+                    uploadBtn.disabled = true;
+                } else {
+                    fileNameDisplay.textContent = `📂 Selected: ${fileName}`;
+                    uploadBtn.disabled = false; // Enable button
+                }
+            } else {
+                fileNameDisplay.textContent = "";
+                uploadBtn.disabled = true; // Disable button
+            }
+        }
+
+        function startConfetti(event) {
+            const fileInput = document.getElementById("fileInput");
+
+            if (fileInput.files.length === 0) {
+                alert("Please select a file before uploading! 💖");
+                return; // Prevent submission if no file is selected
+            }
+
+            event.preventDefault(); // Stop immediate form submission
+
+            const duration = 2 * 1000; // 2 seconds of confetti
+            const animationEnd = Date.now() + duration;
+            const heartColors = ['#FF1493', '#FF69B4', '#FFC0CB', '#FF0000']; 
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            const interval = setInterval(() => {
+                if (Date.now() > animationEnd) {
+                    clearInterval(interval);
+                    document.querySelector("form").submit(); // Submit after confetti
+                    return;
+                }
+
+                confetti({
+                    particleCount: 7,
+                    angle: randomInRange(55, 125),
+                    spread: randomInRange(50, 70),
+                    startVelocity: randomInRange(30, 50),
+                    shapes: ['circle'],
+                    scalar: randomInRange(1, 2),
+                    colors: heartColors,
+                    origin: { y: 0.6 }
+                });
+            }, 200);
+        }
+    </script>
+</body>
+</html>

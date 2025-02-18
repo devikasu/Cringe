@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love Meter</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #FFC0CB;
+            font-size: 0.6rem;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 72rem;
+            margin: 0 auto;
+        }
+        .title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            margin-top: -1rem;
+            font-family: 'Press Start 2P', cursive;
+            color: white;
+        }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            grid-auto-rows: 100px;
+        }
+        @media (min-width: 768px) {
+            .gallery {
+                grid-template-columns: repeat(3, 1fr);
+                grid-auto-rows: 150px;
+            }
+        }
+        @media (min-width: 1024px) {
+            .gallery {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        .box {
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            overflow-y: auto;
+            border: 2px solid white;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .box:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        table {
+            margin-top: 1rem;
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            font-size: 0.9rem;
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        th {
+            background-color: #ff6fa8;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #ffe0ec;
+        }
+        tr:hover {
+            background-color: #ffb6c1;
+            transition: 0.3s ease-in-out;
+        }
+
+        .blue { background-color: #e983de; }
+        .red { background-color: #ef449f; grid-row: span 1; }
+        .green { background-color: #e77ecb; grid-column: span 2; }
+        .yellow { background-color: #ff2da7; }
+        .purple { background-color: #e066b4; grid-column: span 2; grid-row: span 2; }
+        .pink { background-color: #ec4899; }
+        .gray { background-color: #cd1c95; }
+        .indigo { background-color: #f163c2; grid-column: span 2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Love Meter</h1>
+        <div class="gallery">
+
+            <div class="box blue">
+                Most Used Word
+                <table>
+                    {% for word, count in most_used_word.items() %}
+                    <tr>
+                        <td>{{ word }}</td>
+                        <td>{{ count[0] }}</td>  
+                        <td>{{ count[1] }}</td>  
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <div class="box red">
+                'I love you' Count
+                <table>
+                    {% for person, count in love_counts.items() %}
+                    <tr><td>{{ person }}</td><td>{{ count }}</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <div class="box green">
+                Sorry Messages Count
+                <table>
+                    {% for person, count in sorry.items() %}
+                    <tr><td>{{ person }}</td><td>{{ count }}</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <div class="box yellow">
+                Most Used Emoji
+                <table>
+                    {% for emoji, count in emoji_data.items() %}
+                    <tr>
+                        <td>{{ emoji }}</td>
+                        <td>{{ count[0] }}</td>
+                        <td>{{ count[1] }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <div class="box purple scrollable">
+                <h3>Longest Message</h3>
+                <div class="chat-container left">
+                    <div class="chat-bubble">
+                        <strong>{{ longest_message[0][0] }}</strong>
+                        <p>{{ longest_message[0][1] }}</p>
+                    </div>
+                </div>
+                <div class="chat-container right">
+                    <div class="chat-bubble">
+                        <strong>{{ longest_message[1][0] }}</strong>
+                        <p>{{ longest_message[1][1] }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="box pink">
+                Average Reply Time
+                <table>
+                    {% for person, time in replies.items() %}
+                    <tr><td>{{ person }}</td><td>{{ time }}</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <!-- Updated Box for Most Lovey-Dovey Hour -->
+            <div class="box blue">
+                💖 Most Lovey-Dovey Hour
+                <table>
+                    <tr>
+                        <td>{{ lovey_dovey_hour }}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="box gray">
+                Fastest & Slowest Reply
+                <table>
+                    {% if "fastest" in speed %}
+                    <tr><td>Fastest</td><td>{{ speed["fastest"][0] }}</td><td>{{ speed["fastest"][1] }}</td></tr>
+                    {% endif %}
+                    {% if "slowest" in speed %}
+                    <tr><td>Slowest</td><td>{{ speed["slowest"][0] }}</td><td>{{ speed["slowest"][1] }}</td></tr>
+                    {% endif %}
+                </table>
+            </div>
+
+            <div class="box indigo">
+                Replies in the Same Minute
+                <table>
+                    {% for person, count in minute.items() %}
+                    <tr><td>{{ person }}</td><td>{{ count }}</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <div class="box green">
+                'I miss you' Count
+                <table>
+                    {% for person, count in miss.items() %}
+                    <tr><td>{{ person }}</td><td>{{ count }}</td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
