@@ -151,3 +151,20 @@ def most_lovey_dovey_hour(df):
     else:
         return "No love messages found 😢"
 
+def longest_message(df):
+    if df.empty:
+        return {"longest_overall": ("None", 0), "longest_per_person": {}}
+
+    # Find the longest message overall
+    longest_overall = df.loc[df["Message"].str.len().idxmax()]
+    longest_overall_tuple = (longest_overall["Person"], len(longest_overall["Message"]))
+
+    # Find the longest message per person
+    longest_per_person = {}
+    for person, messages in df.groupby("Person")["Message"]:
+        longest_msg = messages.loc[messages.str.len().idxmax()]
+        longest_per_person[person] = len(longest_msg)
+
+    print("Longest message analysis done")
+    return {"longest_overall": longest_overall_tuple, "longest_per_person": longest_per_person}
+
