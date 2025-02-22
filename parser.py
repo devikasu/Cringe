@@ -5,41 +5,58 @@ import emoji
 
 # Function to parse the chat log
 def parse_chat_log(contents):
-    pattern1 = re.compile(r"(\d{1,2}/\d{1,2}/\d{2}), (\d{1,2}:\d{2}\s?[APM]*?) - ([^:]+?): (.*)")
-    pattern2 = re.compile(r"\[(\d{2}/\d{2}/\d{2}), (\d{1,2}:\d{2}:\d{2}\s?[APM]*)\] ([^:]+): (.*)")
-    
-    excluded_messages = {"GIF omitted", "video omitted", "image omitted", "audio omitted", "document omitted", "Media omitted"}
-    data = []
-    lines = contents.decode("utf-8").split("\n")
-    
-    for line in lines:
-        match = pattern1.match(line.strip()) or pattern2.match(line.strip())
-        if match:
-            date, time, person, message = match.groups()
-            message = message.strip('"')
-            if message not in excluded_messages:
-                data.append([date, time, person, message])
-        else:
-            if data and data[-1][3] not in excluded_messages:
-                data[-1][3] += '\n' + line.strip()
-    
-    df = pd.DataFrame(data, columns=['Date', 'Time', 'Person', 'Message'])
-    df = df[~df['Message'].str.contains("omitted", case=False, na=False)]
-    df['Datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'], errors='coerce')
-    return df
+    if not contents:
+        print("Error: Empty file received")
+        return None  # Return None if the file is empty
+
+    try:
+        pattern1 = re.compile(r"(\d{1,2}/\d{1,2}/\d{2}), (\d{1,2}:\d{2}\s?[APM]*?) - ([^:]+?): (.*)")
+        pattern2 = re.compile(r"\[(\d{2}/\d{2}/\d{2}), (\d{1,2}:\d{2}:\d{2}\s?[APM]*)\] ([^:]+): (.*)")
+
+        excluded_messages = {"GIF omitted", "video omitted", "image omitted", "audio omitted", "document omitted", "Media omitted"}
+        data = []
+        lines = contents.decode("utf-8", errors="ignore").split("\n")  # Handle decoding errors
+
+        for line in lines:
+            match = pattern1.match(line.strip()) or pattern2.match(line.strip())
+            if match:
+                date, time, person, message = match.groups()
+                message = message.strip('"')
+                if message not in excluded_messages:
+                    data.append([date, time, person, message])
+            else:
+                if data and data[-1][3] not in excluded_messages:
+                    data[-1][3] += '\n' + line.strip()
+
+        if not data:  # If no messages were parsed, return None
+            print("Error: No valid messages parsed from file")
+            return None
+
+        df = pd.DataFrame(data, columns=['Date', 'Time', 'Person', 'Message'])
+        df = df[~df['Message'].str.contains("omitted", case=False, na=False)]
+        df['Datetime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'], errors='coerce')
+
+        if df['Datetime'].isna().all():
+            print("Error: All datetime values failed to parse")
+            return None
+
+        return df
+    except Exception as e:
+        print(f"Error parsing chat log: {e}")
+        return None  # Return None if there's an error
 
 # Function to count "sorry" messages
 def count_sorry_messages(df):
     sorry_variants = ["sorry", "sry", "my bad", "apologies"]
     sorry_regex = re.compile('|'.join(sorry_variants), re.IGNORECASE)
-    
+
     sorry_counts = df.groupby("Person")["Message"].apply(lambda messages: sum(bool(sorry_regex.search(msg)) for msg in messages)).to_dict()
     return sorry_counts
 
 # Function to find the most used word with more than 4 letters per person
 def most_used_important_word(df):
     word_counts = {}
-    
+
     for person, messages in df.groupby("Person")["Message"]:
         words = " ".join(messages).lower().split()
         filtered_words = [word for word in words if word.isalpha() and len(word) > 4]
@@ -93,7 +110,7 @@ def average_reply_time(df):
 # Function to find the most used emoji per person
 def most_used_emoji(df):
     emoji_counts = {}
-    
+
     for person, messages in df.groupby("Person")["Message"]:
         emojis = [char for msg in messages for char in msg if char in emoji.EMOJI_DATA]
         emoji_freq = Counter(emojis)
@@ -105,7 +122,7 @@ def most_used_emoji(df):
 def count_love_messages(df):
     love_variants = ["i love you", "i luv u", "i luv you", "i love u", "ily", "i lub you", "i lub u"]
     love_regex = re.compile('|'.join(love_variants), re.IGNORECASE)
-    
+
     love_counts = df.groupby("Person")["Message"].apply(lambda messages: sum(bool(love_regex.search(msg)) for msg in messages)).to_dict()
     return love_counts
 
@@ -113,7 +130,7 @@ def count_love_messages(df):
 def count_miss_messages(df):
     miss_variants = ["i miss you", "i miss u"]
     miss_regex = re.compile('|'.join(miss_variants), re.IGNORECASE)
-    
+
     miss_counts = df.groupby("Person")["Message"].apply(lambda messages: sum(bool(miss_regex.search(msg)) for msg in messages)).to_dict()
     return miss_counts
 

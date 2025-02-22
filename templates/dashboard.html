@@ -8,7 +8,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
         body {
-            font-family: 'Press Start 2P', cursive;
             background-color: #FFC0CB;
             font-size: 0.6rem;
             padding: 1rem;
@@ -18,15 +17,16 @@
             margin: 0 auto;
         }
         .title {
+            font-family: 'Press Start 2P', cursive;
             text-align: center;
             font-size: 1.5rem;
             font-weight: bold;
             margin-bottom: 1.5rem;
             margin-top: -1rem;
-            font-family: 'Press Start 2P', cursive;
             color: white;
         }
         .gallery {
+            font-family: 'Press Start 2P', cursive;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
@@ -49,35 +49,39 @@
             padding: 15px;
             text-align: center;
             font-weight: bold;
-            overflow-y: auto;
             border: 2px solid white;
             transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            font-family: Arial, sans-serif; /* Normal font for content */
+            overflow: visible;
+            height: auto;
         }
         .box:hover {
             transform: scale(1.1);
             box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+        }
+        .box h3, .box > strong {
+            font-family: 'Press Start 2P', cursive;
         }
 
         table {
             margin-top: 1rem;
             width: 100%;
             border-collapse: collapse;
-            font-family: Arial, sans-serif;
-            font-size: 0.9rem;
             background-color: #fff;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.2);
+            font-family: Arial, sans-serif;
         }
         th, td {
             padding: 10px;
             text-align: left;
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            font-size: medium;
         }
         th {
             background-color: #ff6fa8;
             color: white;
-            font-weight: bold;
         }
         tr:nth-child(even) {
             background-color: #ffe0ec;
@@ -91,7 +95,13 @@
         .red { background-color: #ef449f; grid-row: span 1; }
         .green { background-color: #e77ecb; grid-column: span 2; }
         .yellow { background-color: #ff2da7; }
-        .purple { background-color: #e066b4; grid-column: span 2; grid-row: span 2; }
+        .purple { 
+            background-color: #e066b4; 
+            grid-column: span 2; 
+            grid-row: span 2;
+            max-height: none !important;
+            overflow: visible !important;
+        }
         .pink { background-color: #ec4899; }
         .gray { background-color: #cd1c95; }
         .indigo { background-color: #f163c2; grid-column: span 2; }
@@ -103,7 +113,7 @@
         <div class="gallery">
 
             <div class="box blue">
-                Most Used Word
+                <h3>Most Used Word</h3>
                 <table>
                     {% for word, count in most_used_word.items() %}
                     <tr>
@@ -116,7 +126,7 @@
             </div>
 
             <div class="box red">
-                'I love you' Count
+                <h3>'I love you' Count</h3>
                 <table>
                     {% for person, count in love_counts.items() %}
                     <tr><td>{{ person }}</td><td>{{ count }}</td></tr>
@@ -125,16 +135,20 @@
             </div>
 
             <div class="box green">
-                Sorry Messages Count
+                <h3>Sorry Messages Count</h3>
+                {% if sorry and sorry|length > 0 %}
                 <table>
                     {% for person, count in sorry.items() %}
                     <tr><td>{{ person }}</td><td>{{ count }}</td></tr>
                     {% endfor %}
                 </table>
+                {% else %}
+                <p>No sorry messages recorded.</p>
+                {% endif %}
             </div>
 
             <div class="box yellow">
-                Most Used Emoji
+                <h3>Most Used Emoji</h3>
                 <table>
                     {% for emoji, count in emoji_data.items() %}
                     <tr>
@@ -146,69 +160,16 @@
                 </table>
             </div>
 
-            <div class="box purple scrollable">
+            <div class="box purple">
                 <h3>Longest Message</h3>
-                <div class="chat-container left">
-                    <div class="chat-bubble">
-                        <strong>{{ longest_message[0][0] }}</strong>
-                        <p>{{ longest_message[0][1] }}</p>
-                    </div>
-                </div>
-                <div class="chat-container right">
-                    <div class="chat-bubble">
-                        <strong>{{ longest_message[1][0] }}</strong>
-                        <p>{{ longest_message[1][1] }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="box pink">
-                Average Reply Time
-                <table>
-                    {% for person, time in replies.items() %}
-                    <tr><td>{{ person }}</td><td>{{ time }}</td></tr>
-                    {% endfor %}
-                </table>
-            </div>
-
-            <!-- Updated Box for Most Lovey-Dovey Hour -->
-            <div class="box blue">
-                💖 Most Lovey-Dovey Hour
-                <table>
-                    <tr>
-                        <td>{{ lovey_dovey_hour }}</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div class="box gray">
-                Fastest & Slowest Reply
-                <table>
-                    {% if "fastest" in speed %}
-                    <tr><td>Fastest</td><td>{{ speed["fastest"][0] }}</td><td>{{ speed["fastest"][1] }}</td></tr>
-                    {% endif %}
-                    {% if "slowest" in speed %}
-                    <tr><td>Slowest</td><td>{{ speed["slowest"][0] }}</td><td>{{ speed["slowest"][1] }}</td></tr>
-                    {% endif %}
-                </table>
-            </div>
-
-            <div class="box indigo">
-                Replies in the Same Minute
-                <table>
-                    {% for person, count in minute.items() %}
-                    <tr><td>{{ person }}</td><td>{{ count }}</td></tr>
-                    {% endfor %}
-                </table>
-            </div>
-
-            <div class="box green">
-                'I miss you' Count
-                <table>
-                    {% for person, count in miss.items() %}
-                    <tr><td>{{ person }}</td><td>{{ count }}</td></tr>
-                    {% endfor %}
-                </table>
+                {% if longest_message|length > 0 %}
+                    <strong>{{ longest_message[0][0] }}</strong>
+                    <p>{{ longest_message[0][1] }}</p>
+                {% endif %}
+                {% if longest_message|length > 1 %}
+                    <strong>{{ longest_message[1][0] }}</strong>
+                    <p>{{ longest_message[1][1] }}</p>
+                {% endif %}
             </div>
 
         </div>
