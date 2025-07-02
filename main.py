@@ -19,8 +19,7 @@ from parser import (
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
-
-executor = ThreadPoolExecutor(max_workers=8)  # Adjust based on CPU cores
+executor = ThreadPoolExecutor(max_workers=8)
 
 @app.get("/", response_class=HTMLResponse)
 def serve_form():
@@ -28,13 +27,8 @@ def serve_form():
         return HTMLResponse(content=f.read())
 
 async def analyze_chat(df):
-    """
-    Runs chat analysis functions concurrently using asyncio.
-    """
     loop = asyncio.get_event_loop()
-
     try:
-        # Run multiple computations in parallel
         results = await asyncio.gather(
             loop.run_in_executor(executor, most_used_important_word, df),
             loop.run_in_executor(executor, count_love_messages, df),
@@ -47,13 +41,12 @@ async def analyze_chat(df):
             loop.run_in_executor(executor, count_miss_messages, df)
         )
 
-        # Extract results safely
-        longest_msg = results[2] if isinstance(results[2], list) and results[2] else [["No messages found", ""]]
+        longest_msg = results[2] if isinstance(results[2], dict) else {"longest_overall": ("None", 0), "longest_per_person": {}}
 
         return {
             "most_used_word": results[0],
             "love_counts": results[1],
-            "longest_message": longest_msg,  # ✅ Always valid
+            "longest_message": longest_msg,
             "emoji_data": results[3],
             "sorry": results[4],
             "replies": results[5],
@@ -61,39 +54,30 @@ async def analyze_chat(df):
             "minute": results[7],
             "miss": results[8]
         }
-    
+
     except Exception as e:
         print(f"Error analyzing chat: {e}")
         return {
             "most_used_word": {},
             "love_counts": {},
-            "longest_message": [["No messages found", ""]],
+            "longest_message": {"longest_overall": ("None", 0), "longest_per_person": {}},
             "emoji_data": {},
             "sorry": {},
             "replies": {},
             "speed": {},
-            "minute": {},
+            "minute": {"same_minute_reply_count": 0},
             "miss": {}
         }
 
 @app.post("/upload", response_class=HTMLResponse)
 async def upload_file(request: Request, file: UploadFile = File(...)):
-    """
-    Handles file upload and processes the chat log efficiently.
-    """
     try:
-        # Read file in chunks instead of all at once
         contents = await file.read()
-
-        # Process chat log in a separate thread
         df = await asyncio.get_event_loop().run_in_executor(executor, parse_chat_log, contents)
-
-        # Run chat analysis in parallel
+        if df is None:
+            raise ValueError("Parsed DataFrame is None")
         results = await analyze_chat(df)
-
-        # ✅ Ensure all variables are valid before rendering the template
         return templates.TemplateResponse("dashboard.html", {"request": request, **results})
-    
     except Exception as e:
         print(f"Error processing file: {e}")
         return HTMLResponse(content="<h2>Something went wrong while processing the file.</h2>", status_code=500)
